@@ -45,24 +45,85 @@ self.addEventListener("activate", function (event) {
   return self.clients.claim();
 });
 
+// self.addEventListener("fetch", function (event) {
+//   event.respondWith(
+//     caches.match(event.request).then(function (response) {
+//       if (response) {
+//         return response;
+//       }
+//       return fetch(event.request)
+//         .then(function (fetchRes) {
+//           return caches.open(CACHE_DYNAMIC_NAME).then(function (cache) {
+//             cache.put(event.request.url, fetchRes.clone());
+//             return fetchRes;
+//           });
+//         })
+//         .catch(function (e) {
+//           return caches.open(CACHE_STATIC_NAME).then(function (cache) {
+//             return cache.match("/offline.html");
+//           });
+//         });
+//     })
+//   );
+// });
+
 self.addEventListener("fetch", function (event) {
-  event.respondWith(
-    caches.match(event.request).then(function (response) {
-      if (response) {
-        return response;
-      }
-      return fetch(event.request)
-        .then(function (fetchRes) {
-          return caches.open(CACHE_DYNAMIC_NAME).then(function (cache) {
-            cache.put(event.request.url, fetchRes.clone());
-            return fetchRes;
-          });
-        })
-        .catch(function (e) {
-          return caches.open(CACHE_STATIC_NAME).then(function (cache) {
-            return cache.match("/offline.html");
-          });
+  var url = "https://httpbin.org/get";
+  if (event.request.url.indexOf(url) > -1) {
+    event.respondWith(
+      caches.open(CACHE_DYNAMIC_NAME).then(function (cache) {
+        return fetch(event.request).then(function (response) {
+          cache.put(event.request.url, response.clone());
+          return response;
         });
-    })
-  );
+      })
+    );
+  } else {
+    event.respondWith(
+      caches.match(event.request).then(function (response) {
+        if (response) {
+          return response;
+        }
+        return fetch(event.request)
+          .then(function (fetchRes) {
+            return caches.open(CACHE_DYNAMIC_NAME).then(function (cache) {
+              cache.put(event.request.url, fetchRes.clone());
+              return fetchRes;
+            });
+          })
+          .catch(function (e) {
+            return caches.open(CACHE_STATIC_NAME).then(function (cache) {
+              if (event.request.url.indexOf("/help") > -1) {
+                return cache.match("/offline.html");
+              }
+            });
+          });
+      })
+    );
+  }
 });
+
+// // Cache-Only
+// self.addEventListener("fetch", function (event) {
+//   event.respondWith(caches.match(event.request));
+// });
+
+// // Network-Only
+// self.addEventListener("fetch", function (event) {
+//   event.respondWith(fetch(event.request));
+// });
+
+// // Network with cache fallback
+// self.addEventListener("fetch", function (event) {
+//   event.respondWith(
+//     fetch(event.request)
+//       .then(function (response) {
+//         caches.open(CACHE_DYNAMIC_NAME).then(function (cache) {
+//           cache.put(event.request.url, response.clone());
+//         });
+//       })
+//       .catch(function (e) {
+//         caches.match(event.request);
+//       })
+//   );
+// });
