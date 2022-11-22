@@ -94,7 +94,9 @@ self.addEventListener("fetch", function (event) {
           .catch(function (e) {
             return caches.open(CACHE_STATIC_NAME).then(function (cache) {
               if (event.request.url.indexOf("/help") > -1) {
-                return cache.match("/offline.html");
+                if (event.request.url.indexOf("/help")) {
+                  return cache.match("/offline.html");
+                }
               }
             });
           });
