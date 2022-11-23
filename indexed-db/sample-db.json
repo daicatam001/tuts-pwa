@@ -1,0 +1,9 @@
+{
+    "posts":{
+        "first-post":{
+            "title": "this is title",
+            "location":"this is location",
+            "image":"https://firebasestorage.googleapis.com/v0/b/pwagram-6f96d.appspot.com/o/photo-1527269534026-c86f4009eace.avif?alt=media&token=e80ec32d-9cf0-4411-9d0c-0dc3b9db63b4"
+        }
+    }
+}
