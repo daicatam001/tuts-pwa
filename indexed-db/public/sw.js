@@ -1,4 +1,4 @@
-importScripts("/js/idb.js");
+importScripts("/src/js/idb.js");
 var CACHE_STATIC_NAME = "STATIC-V4";
 var CACHE_DYNAMIC_NAME = "DYNAMIC-V2";
 var STATIC_FILES = [
@@ -19,11 +19,12 @@ var STATIC_FILES = [
   "https://cdnjs.cloudflare.com/ajax/libs/material-design-lite/1.3.0/material.indigo-pink.min.css",
 ];
 var dbPromise = idb.open("posts-store", 1, function (db) {
-  db.createObjectStore("posts", { keyPart: "id" });
+  if (!db.objectStoreNames.contains("posts")) {
+    db.createObjectStore("posts", { keyPath: "id" });
+  }
 });
 self.addEventListener("install", function (event) {
   console.log("[Service Worker] Installing Service Worker ...", event);
-
   event.waitUntil(
     caches.open(CACHE_STATIC_NAME).then(function (cache) {
       console.log("[Service worker] Precaching App Shell");
@@ -75,12 +76,23 @@ self.addEventListener("activate", function (event) {
 
 self.addEventListener("fetch", function (event) {
   var url = "https://pwagram-6f96d-default-rtdb.firebaseio.com/posts.json";
-
+  console.log(event.request.url);
   if (event.request.url.indexOf(url) > -1) {
     event.respondWith(
       caches.open(CACHE_DYNAMIC_NAME).then(function (cache) {
         return fetch(event.request).then(function (response) {
-          cache.put(event.request.url, response.clone());
+          var cloneRes = response.clone();
+          cloneRes.json().then(function (data) {
+            for (var key in data) {
+              dbPromise.then(function (db) {
+                console.log(data[key])
+                var trx = db.transaction("posts", "readwrite");
+                var store = trx.objectStore("posts");
+                store.put(data[key]);
+                return trx.complete
+              });
+            }
+          });
           return response;
         });
       })
