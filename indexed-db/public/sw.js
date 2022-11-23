@@ -1,3 +1,4 @@
+importScripts("/js/idb.js");
 var CACHE_STATIC_NAME = "STATIC-V4";
 var CACHE_DYNAMIC_NAME = "DYNAMIC-V2";
 var STATIC_FILES = [
@@ -6,6 +7,7 @@ var STATIC_FILES = [
   "/offline.html",
   "/src/js/app.js",
   "/src/js/feed.js",
+  "/src/js/idb.js",
   "/src/js/promise.js",
   "/src/js/fetch.js",
   "/src/js/material.min.js",
@@ -16,6 +18,9 @@ var STATIC_FILES = [
   "https://fonts.googleapis.com/icon?family=Material+Icons",
   "https://cdnjs.cloudflare.com/ajax/libs/material-design-lite/1.3.0/material.indigo-pink.min.css",
 ];
+var dbPromise = idb.open("posts-store", 1, function (db) {
+  db.createObjectStore("posts", { keyPart: "id" });
+});
 self.addEventListener("install", function (event) {
   console.log("[Service Worker] Installing Service Worker ...", event);
 
@@ -97,9 +102,9 @@ self.addEventListener("fetch", function (event) {
           })
           .catch(function (e) {
             return caches.open(CACHE_STATIC_NAME).then(function (cache) {
-                if (event.request.headers.get('accept').includes('text/html')) {
-                  return cache.match("/offline.html");
-                }
+              if (event.request.headers.get("accept").includes("text/html")) {
+                return cache.match("/offline.html");
+              }
             });
           });
       })
