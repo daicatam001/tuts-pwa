@@ -92,22 +92,15 @@ fetch(url)
   .then(function (data) {
     networkDataReceived = true;
     console.log("data from fetch", data);
-    
-    updateUI(Object.values(data))
+
+    updateUI(Object.values(data));
   });
 
-if ("caches" in window) {
-  caches
-    .match(url)
-    .then(function (response) {
-      if (response) {
-        return response.json();
-      }
-    })
-    .then(function (data) {
-      console.log("data from caches", data);
-      if (!networkDataReceived) {
-        updateUI(Object.values(data))
-      }
-    });
+if ("indexedDB" in window) {
+  readAllData("posts").then(function (data) {
+    console.log("data from caches", data);
+    if (!networkDataReceived && data) {
+      updateUI(Object.values(data));
+    }
+  });
 }

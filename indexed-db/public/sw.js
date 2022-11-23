@@ -1,4 +1,6 @@
 importScripts("/src/js/idb.js");
+importScripts("/src/js/utility.js");
+
 var CACHE_STATIC_NAME = "STATIC-V4";
 var CACHE_DYNAMIC_NAME = "DYNAMIC-V2";
 var STATIC_FILES = [
@@ -18,11 +20,7 @@ var STATIC_FILES = [
   "https://fonts.googleapis.com/icon?family=Material+Icons",
   "https://cdnjs.cloudflare.com/ajax/libs/material-design-lite/1.3.0/material.indigo-pink.min.css",
 ];
-var dbPromise = idb.open("posts-store", 1, function (db) {
-  if (!db.objectStoreNames.contains("posts")) {
-    db.createObjectStore("posts", { keyPath: "id" });
-  }
-});
+
 self.addEventListener("install", function (event) {
   console.log("[Service Worker] Installing Service Worker ...", event);
   event.waitUntil(
@@ -82,16 +80,12 @@ self.addEventListener("fetch", function (event) {
       caches.open(CACHE_DYNAMIC_NAME).then(function (cache) {
         return fetch(event.request).then(function (response) {
           var cloneRes = response.clone();
-          cloneRes.json().then(function (data) {
-            for (var key in data) {
-              dbPromise.then(function (db) {
-                console.log(data[key])
-                var trx = db.transaction("posts", "readwrite");
-                var store = trx.objectStore("posts");
-                store.put(data[key]);
-                return trx.complete
-              });
-            }
+          clearAllData("posts").then(function () {
+            cloneRes.json().then(function (data) {
+              for (var key in data) {
+                writeData("posts", data[key]);
+              }
+            });
           });
           return response;
         });
