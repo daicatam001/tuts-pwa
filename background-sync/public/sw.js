@@ -142,3 +142,32 @@ self.addEventListener("fetch", function (event) {
 //       })
 //   );
 // });
+
+self.addEventListener("sync", function (event) {
+  console.log("[Service worker] background syncing");
+  if (event.tag === "sync-new-posts") {
+    console.log("[Service worker] Syncing new posts");
+    event.waitUntil(
+      readAllData("sync-posts").then(function (data) {
+        data.forEach(function (dt) {
+          fetch(
+            "https://pwagram-6f96d-default-rtdb.firebaseio.com/posts.json",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Accept: "application/json",
+              },
+              body: JSON.stringify(dt),
+            }
+          ).then(function (res) {
+            console.log("Send data", res);
+            if (res.ok) {
+              deleteItemFromData("sync-posts", dt.id);
+            }
+          });
+        });
+      })
+    );
+  }
+});
